@@ -17,10 +17,7 @@ class TaskPolicy
     }
     public function update(User $user, Task $task)
     {
-        if ($task->completed_at) {
-            return false;
-        }
-        return $this->manage($user, $task);
+        return !$task->completed && $this->manage($user, $task);
     } public function delete(User $user, Task $task)
     {
         return $this->manage($user, $task);

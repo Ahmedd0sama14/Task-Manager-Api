@@ -7,20 +7,25 @@ use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
-
+use Illuminate\Http\Request;
 
 
 class TaskController extends Controller
 {
+    protected function query()
+    {
+        return auth()->user()->tasks();
+    }
 
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
-        $tasks = $user->tasks()->latest()->paginate(10);
-        return TaskResource::collection($tasks);
+        $tasks = $this->query()
+        ->when($request->filled('search'),fn ($q) =>  $q->search($request->search))
+        ->when($request->filled('status') ,fn($q) => $q->status($request->status));
+        return TaskResource::collection($tasks->latest()->paginate(10)->withQueryString());
     }
 
 
@@ -29,7 +34,7 @@ class TaskController extends Controller
      */
     public function store(StoreTaskRequest $storeRequest)
     {
-        $task = auth()->user()->tasks()->create($storeRequest->validated());
+        $task = $this->query()->create($storeRequest->validated());
         return new TaskResource($task);
     }
 
@@ -51,9 +56,8 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task);
         $data = $request->validated();
-        if (isset($data['status']) && $data['status'] === 'completed') {
-            $data['completed_at'] = now();
-        }
+        if (isset($data['status']) && $data['status'] === 'completed')
+       {     $data['completed_at'] = now();}
         $task->update($data);
 
         return new TaskResource($task);
