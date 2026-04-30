@@ -12,6 +12,10 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Task::class);
+    }
     protected function query()
     {
         return auth()->user()->tasks();
@@ -23,8 +27,8 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $tasks = $this->query()
-        ->when($request->filled('search'),fn ($q) =>  $q->search($request->search))
-        ->when($request->filled('status') ,fn($q) => $q->status($request->status));
+            ->when($request->filled('search'), fn($q) =>  $q->search($request->search))
+            ->when($request->filled('status'), fn($q) => $q->status($request->status));
         return TaskResource::collection($tasks->latest()->paginate(10)->withQueryString());
     }
 
@@ -43,8 +47,6 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
-        $this->authorize('view', $task);
-
         return new TaskResource($task);
     }
 
@@ -54,10 +56,10 @@ class TaskController extends Controller
      */
     public function update(UpdateTaskRequest $request, Task $task)
     {
-        $this->authorize('update', $task);
         $data = $request->validated();
-        if (isset($data['status']) && $data['status'] === 'completed')
-       {     $data['completed_at'] = now();}
+        if (isset($data['status']) && $data['status'] === 'completed') {
+            $data['completed_at'] = now();
+        }
         $task->update($data);
 
         return new TaskResource($task);
@@ -68,10 +70,7 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
-        $this->authorize('delete', $task);
-
         $task->delete();
-
         return response()->noContent();
     }
 }
