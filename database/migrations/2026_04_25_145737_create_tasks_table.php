@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->timestamp('due_date')->nullable();
+            $table->timestamp('due_date');
             $table->timestamp('completed_at')->nullable();
             $table->softDeletes();
             $table->timestamps();
@@ -26,8 +26,7 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     */
-    public function down(): void
+     */    public function down(): void
     {
         Schema::dropIfExists('tasks');
     }
